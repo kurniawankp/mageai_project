@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  mage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: data/mageai:latest
+    container_name: ${CONTAINER_NAME}_mageai
+    ports:
+      - "${MAGE_PORT}:6789"
+    environment:
+      CONCURRENCY_CONFIG_BLOCK_RUN_LIMIT: ${CONCURRENCY_CONFIG_BLOCK_RUN_LIMIT}
+      CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT: ${CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT}
+      DEFAULT_OWNER_EMAIL: ${DEFAULT_OWNER_EMAIL}
+      DEFAULT_OWNER_PASSWORD: ${DEFAULT_OWNER_PASSWORD}
+      DEFAULT_OWNER_USERNAME: ${DEFAULT_OWNER_USERNAME}
+      DISABLE_NOTEBOOK_EDIT_ACCESS: ${DISABLE_NOTEBOOK_EDIT_ACCESS}
+      JWT_SECRET: ${JWT_SECRET}
+      MAGE_DATABASE_CONNECTION_URL: ${MAGE_DATABASE_CONNECTION_URL}
+      PROJECT_NAME: ${PROJECT_NAME}
+      REQUIRE_USER_AUTHENTICATION: ${REQUIRE_USER_AUTHENTICATION}
+      ULIMIT_NO_FILE: ${ULIMIT_NO_FILE}
+      USER_CODE_PATH: /home/src/${PROJECT_NAME}
+    volumes:
+      - .:/home/src/
+    restart: on-failure
+    depends_on:
+      mage_db:
+        condition: service_healthy
+    networks:
+      - mage_connection
+    command: mage start ${PROJECT_NAME}
+  mage_db:
+    image: postgres:15-alpine
+    container_name: ${CONTAINER_NAME}_mageai_db
+    restart: on-failure
+    environment:
+      POSTGRES_DB: ${MAGE_DB_NAME}
+      POSTGRES_USER: ${MAGE_DB_USER}
+      POSTGRES_PASSWORD: ${MAGE_DB_PASSWORD}
+      POSTGRES_SCHEMA: ${MAGE_DB_SCHEMA}
+    ports:
+      - "${MAGE_DB_PORT}:5432"
+    volumes:
+      - ./postgres_data_app:/var/lib/postgresql/data
+    networks:
+      - mage_connection
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MAGE_DB_USER} -d ${MAGE_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+networks:
+  mage_connection:
+    driver: bridge
+    external: true

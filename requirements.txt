@@ -1,0 +1,10 @@
+pyftpdlib>=1.5.9
+psycopg2
+sqlalchemy
+PyYAML
+Office365-REST-Python-Client
+openpyxl>=3.1.2
+pyarrow>=14.0.1
+DBUtils
+clickhouse-connect
+paramiko
