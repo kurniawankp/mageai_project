@@ -68,6 +68,9 @@ docker network create mage_connection
 # Build and start all services
 docker-compose up -d
 
+# Build and start with specific environment file
+docker-compose --env-file .env.dev up -d --build
+
 # Or build and start with logs
 docker-compose up --build
 ```
